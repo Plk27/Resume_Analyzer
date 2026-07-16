@@ -86,7 +86,6 @@ export function AnalyzingView({
         })}
       </div>
 
-      {/* Optional real message display; keeps existing layout intact */}
       {progress.message ? (
         <p className="text-xs text-muted-foreground mt-1">{progress.message}</p>
       ) : null}

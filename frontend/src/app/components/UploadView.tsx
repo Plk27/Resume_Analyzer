@@ -14,12 +14,13 @@ import { formatFileSize } from "../utils/helpers";
 type Props = {
   resumeFile: File | null;
   resumeFileName: string;
-  resumeText: string;
 
   jdText: string;
   jdFile: File | null;
+  jdFileName: string;
 
   canAnalyze: boolean;
+  loading: boolean;
   error: string | null;
 
   onAnalyze: () => void;
@@ -28,22 +29,26 @@ type Props = {
   uploadResume: (file: File | undefined) => void;
   uploadJD: (file: File | undefined) => void;
 
-  removeResume: () => void;
-  removeJD: () => void;
 };
 
 export function UploadView({
   resumeFile,
   resumeFileName,
   jdText,
+  jdFile,
+  jdFileName,
   canAnalyze,
+  loading,
   error,
   onAnalyze,
   setJDText,
   uploadResume,
+  uploadJD,
 }: Props) {
   const [resumeDrag, setResumeDrag] = useState(false);
+  const [jdDrag, setJdDrag] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const jdFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleResumeDrop = useCallback(
     (e: React.DragEvent) => {
@@ -130,7 +135,16 @@ export function UploadView({
             }}
             onDragLeave={() => setResumeDrag(false)}
             onDrop={handleResumeDrop}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => !loading && fileInputRef.current?.click()}
+            onKeyDown={(event) => {
+              if (!loading && (event.key === "Enter" || event.key === " ")) {
+                event.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
+            role="button"
+            tabIndex={loading ? -1 : 0}
+            aria-label="Upload resume as a PDF or DOCX file"
           >
             <input
               ref={fileInputRef}
@@ -171,25 +185,39 @@ export function UploadView({
             )}
           </div>
 
-          <div className="rounded-xl border border-border bg-card flex flex-col p-4 min-h-[220px]">
+          <div
+            className={`rounded-xl border bg-card flex flex-col p-4 min-h-[220px] transition-colors ${jdDrag ? "border-indigo-400 bg-indigo-500/10" : "border-border"}`}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setJdDrag(true);
+            }}
+            onDragLeave={() => setJdDrag(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setJdDrag(false);
+              uploadJD(event.dataTransfer.files?.[0]);
+            }}
+          >
             <div className="flex items-center gap-2 mb-3">
               <FileText size={13} className="text-muted-foreground" />
               <span className="text-sm font-medium text-foreground">
                 Job Description
               </span>
             </div>
+            <input ref={jdFileInputRef} type="file" accept=".pdf,.docx" className="hidden" onChange={(event) => uploadJD(event.target.files?.[0])} />
             <textarea
               className="flex-1 bg-transparent text-sm text-foreground placeholder-muted-foreground resize-none outline-none leading-relaxed"
               placeholder={
                 "Paste the job description here…\n\nInclude required skills, responsibilities, and qualifications for the most accurate analysis."
               }
               value={jdText}
+              disabled={loading}
               onChange={(e) => setJDText(e.target.value)}
             />
             <div className="flex justify-between items-center mt-2 pt-2 border-t border-border">
-              <span className="text-xs text-muted-foreground">
-                {jdText.length} characters
-              </span>
+              <button type="button" onClick={() => jdFileInputRef.current?.click()} disabled={loading} className="text-xs text-indigo-400 hover:text-indigo-300 disabled:cursor-not-allowed">
+                {jdFile ? `Replace ${jdFileName}` : "Upload JD"}
+              </button>
               {jdText.length > 0 && jdText.length < 50 && (
                 <span className="text-xs text-amber-400">
                   Add more detail for better results
@@ -207,18 +235,18 @@ export function UploadView({
         >
           <button
             onClick={onAnalyze}
-            disabled={!canAnalyze}
+            disabled={!canAnalyze || loading}
             className={`flex items-center gap-2.5 px-8 py-3.5 rounded-xl font-bold text-sm transition-all duration-200
               ${
-                canAnalyze
+                canAnalyze && !loading
                   ? "bg-indigo-500 hover:bg-indigo-400 text-white cursor-pointer shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02]"
                   : "bg-white/[0.06] text-muted-foreground cursor-not-allowed"
               }`}
             style={{ fontFamily: "'Archivo', sans-serif" }}
           >
             <Brain size={15} />
-            Analyze Resume
-            {canAnalyze && <ChevronRight size={15} />}
+            {loading ? "Analyzing…" : "Analyze Resume"}
+            {canAnalyze && !loading && <ChevronRight size={15} />}
           </button>
 
           {!canAnalyze && (

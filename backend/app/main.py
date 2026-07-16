@@ -1,13 +1,25 @@
 import re
+import os
 from typing import List
 from io import BytesIO
 
 import fitz
 from docx import Document
 from fastapi import FastAPI, UploadFile, File, Form
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 app = FastAPI(title='AI Resume Analyzer API')
+
+cors_origins = [origin.strip() for origin in os.getenv('CORS_ORIGINS', '').split(',') if origin.strip()]
+if cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=False,
+        allow_methods=['GET', 'POST'],
+        allow_headers=['Content-Type'],
+    )
 
 class AnalysisRequest(BaseModel):
     resumeText: str

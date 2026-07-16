@@ -11,16 +11,12 @@ export default function App() {
 
     resumeFile,
     resumeFileName,
-    resumeText,
-
     jdText,
     jdFile,
+    jdFileName,
 
     uploadResume,
     uploadJD,
-
-    removeResume,
-    removeJD,
 
     setJDText,
 
@@ -57,10 +53,11 @@ export default function App() {
             <UploadView
               resumeFile={resumeFile}
               resumeFileName={resumeFileName}
-              resumeText={resumeText}
               jdText={jdText}
               jdFile={jdFile}
+              jdFileName={jdFileName}
               canAnalyze={canAnalyze}
+              loading={loading}
               error={error}
 
               onAnalyze={analyzeResume}
@@ -68,8 +65,6 @@ export default function App() {
 
               uploadResume={uploadResume}
               uploadJD={uploadJD}
-              removeResume={removeResume}
-              removeJD={removeJD}
             />
           </motion.div>
         )}
